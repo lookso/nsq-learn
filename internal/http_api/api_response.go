@@ -104,6 +104,7 @@ func RespondV1(w http.ResponseWriter, code int, data interface{}) {
 	w.Write(response)
 }
 
+// 使用装饰器模式,装饰不同的功能
 func Decorate(f APIHandler, ds ...Decorator) httprouter.Handle {
 	decorated := f
 	for _, decorate := range ds {
