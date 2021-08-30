@@ -36,7 +36,5 @@ http://localhost:4161/channels?topic=my_topic_test
 - 创建topic
 http://localhost:4161/topic/create?topic=create_topic_test
 
-
-
 ## 疑问
 - nsqlookupd启动后创建的的topic基于map来存储,万一机器挂了,数据岂不是全都没了？
