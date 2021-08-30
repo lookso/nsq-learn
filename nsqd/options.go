@@ -92,8 +92,9 @@ func NewOptions() *Options {
 		log.Fatal(err)
 	}
 
+	// 将hostname进行md5 hash后 通过循环冗余校验后对1024取余，表名id在1024以内唯一
 	h := md5.New()
-	io.WriteString(h, hostname)
+	io.WriteString(h, hostname) // 为何不使用h.Write([]byte(hostname))?
 	defaultID := int64(crc32.ChecksumIEEE(h.Sum(nil)) % 1024)
 
 	return &Options{
@@ -128,7 +129,7 @@ func NewOptions() *Options {
 		MsgTimeout:    60 * time.Second,
 		MaxMsgTimeout: 15 * time.Minute,
 		MaxMsgSize:    1024 * 1024,
-		MaxBodySize:   5 * 1024 * 1024,
+		MaxBodySize:   5 * 1024 * 1024, // 消息体最大尺寸
 		MaxReqTimeout: 1 * time.Hour,
 		ClientTimeout: 60 * time.Second,
 
