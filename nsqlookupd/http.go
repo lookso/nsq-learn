@@ -35,7 +35,7 @@ func newHTTPServer(l *NSQLookupd) *httpServer {
 
 	// v1 negotiate
 	router.Handle("GET", "/debug", http_api.Decorate(s.doDebug, log, http_api.V1))
-	router.Handle("GET", "/lookup", http_api.Decorate(s.doLookup, log, http_api.V1))
+	router.Handle("GET", "/lookup", http_api.Decorate(s.doLookup, log, http_api.V1)) //
 	router.Handle("GET", "/topics", http_api.Decorate(s.doTopics, log, http_api.V1))
 	router.Handle("GET", "/channels", http_api.Decorate(s.doChannels, log, http_api.V1))
 	router.Handle("GET", "/nodes", http_api.Decorate(s.doNodes, log, http_api.V1))
@@ -77,6 +77,8 @@ func (s *httpServer) doInfo(w http.ResponseWriter, req *http.Request, ps httprou
 	}, nil
 }
 
+// 查看所有的topic
+// http://localhost:4161/topics
 func (s *httpServer) doTopics(w http.ResponseWriter, req *http.Request, ps httprouter.Params) (interface{}, error) {
 	topics := s.nsqlookupd.DB.FindRegistrations("topic", "*", "").Keys()
 	return map[string]interface{}{
@@ -101,8 +103,10 @@ func (s *httpServer) doChannels(w http.ResponseWriter, req *http.Request, ps htt
 	}, nil
 }
 
+// 获取topic信息,以及该topic下的channel信息
+// demo url:http://localhost:4161/lookup?topic=my_topic_test
 func (s *httpServer) doLookup(w http.ResponseWriter, req *http.Request, ps httprouter.Params) (interface{}, error) {
-	reqParams, err := http_api.NewReqParams(req)
+	reqParams, err := http_api.NewReqParams(req) // 获取url参数和body内容操作整个入参
 	if err != nil {
 		return nil, http_api.Err{400, "INVALID_REQUEST"}
 	}
@@ -116,11 +120,13 @@ func (s *httpServer) doLookup(w http.ResponseWriter, req *http.Request, ps httpr
 	if len(registration) == 0 {
 		return nil, http_api.Err{404, "TOPIC_NOT_FOUND"}
 	}
-
+	// 找到该topic下所有的channel
 	channels := s.nsqlookupd.DB.FindRegistrations("channel", topicName, "*").SubKeys()
 	producers := s.nsqlookupd.DB.FindProducers("topic", topicName, "")
+	// 过滤获取所有可用的Producer
 	producers = producers.FilterByActive(s.nsqlookupd.opts.InactiveProducerTimeout,
 		s.nsqlookupd.opts.TombstoneLifetime)
+	//查询到channels和producers，以JSON格式返回
 	return map[string]interface{}{
 		"channels":  channels,
 		"producers": producers.PeerInfo(),
@@ -145,7 +151,7 @@ func (s *httpServer) doCreateTopic(w http.ResponseWriter, req *http.Request, ps 
 	s.nsqlookupd.logf(LOG_INFO, "DB: adding topic(%s)", topicName)
 	key := Registration{"topic", topicName, ""}
 	s.nsqlookupd.DB.AddRegistration(key)
-
+	// 创建成功返回结果也没提示,略坑
 	return nil, nil
 }
 

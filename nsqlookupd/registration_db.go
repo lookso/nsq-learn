@@ -133,6 +133,7 @@ func (r *RegistrationDB) FindRegistrations(category string, key string, subkey s
 	return results
 }
 
+// 根据category key subkey查找所有的Producer
 func (r *RegistrationDB) FindProducers(category string, key string, subkey string) Producers {
 	r.RLock()
 	defer r.RUnlock()
@@ -143,10 +144,12 @@ func (r *RegistrationDB) FindProducers(category string, key string, subkey strin
 
 	results := make(map[string]struct{})
 	var retProducers Producers
+	// 遍历每个registration下的producers
 	for k, producers := range r.registrationMap {
 		if !k.IsMatch(category, key, subkey) {
 			continue
 		}
+		//判断producer是否已经存在了，如果存在的话，就不添加了
 		for _, producer := range producers {
 			_, found := results[producer.peerInfo.id]
 			if found == false {
