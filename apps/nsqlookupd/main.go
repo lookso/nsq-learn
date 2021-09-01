@@ -76,6 +76,7 @@ func (p *program) Start() error {
 			logFatal("failed to load config file %s - %s", configFile, err)
 		}
 	}
+	// 初始化配置
 	cfg.Validate()
 
 	options.Resolve(opts, flagSet, cfg)

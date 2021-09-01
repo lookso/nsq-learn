@@ -71,11 +71,12 @@ func (p *program) Start() error {
 		logFatal("failed to instantiate nsqd - %s", err)
 	}
 	p.nsqd = nsqd
-
+	// 启动加载历史消息
 	err = p.nsqd.LoadMetadata()
 	if err != nil {
 		logFatal("failed to load metadata - %s", err)
 	}
+	// 消息持久化
 	err = p.nsqd.PersistMetadata()
 	if err != nil {
 		logFatal("failed to persist metadata - %s", err)

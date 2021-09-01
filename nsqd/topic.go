@@ -81,7 +81,9 @@ func NewTopic(topicName string, nsqd *NSQD, deleteCallback func(*Topic)) *Topic 
 	}
 
 	t.waitGroup.Wrap(t.messagePump)
-
+	// 以ephemeral结尾的表示临时队列,最后一个客户端链接断开后,该channel会消失
+	// 执行 t.nsqd.Notify(t, !t.ephemeral)
+	// 如果不是临时队列,该函数在topic和channel创建、停止的时候调用Notify函数通过执行PersistMetadata函数，将topic和channel的信息写到文件中。
 	t.nsqd.Notify(t, !t.ephemeral)
 
 	return t

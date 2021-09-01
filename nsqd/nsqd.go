@@ -304,9 +304,11 @@ func writeSyncFile(fn string, data []byte) error {
 }
 
 func (n *NSQD) LoadMetadata() error {
-	atomic.StoreInt32(&n.isLoading, 1)
-	defer atomic.StoreInt32(&n.isLoading, 0)
+	atomic.StoreInt32(&n.isLoading, 1)       // 原子写入n.isLoading为1
+	defer atomic.StoreInt32(&n.isLoading, 0) //函数退出时 原子写入 n.isLoading为0
 
+	// 根据配置项 DataPath加载文件,如果不存在从当前文件文件路径取
+	// 数据文件包含当前的topic以及所属channel以及是否停顿 paused和版本号信息
 	fn := newMetadataFile(n.getOpts())
 
 	data, err := readOrEmpty(fn)
@@ -324,7 +326,7 @@ func (n *NSQD) LoadMetadata() error {
 	}
 
 	for _, t := range m.Topics {
-		if !protocol.IsValidTopicName(t.Name) {
+		if !protocol.IsValidTopicName(t.Name) { // topic 名字长度是否是大于1小于64,是否匹配给定的正则
 			n.logf(LOG_WARN, "skipping creation of invalid topic %s", t.Name)
 			continue
 		}
@@ -444,6 +446,11 @@ func (n *NSQD) Exit() {
 
 // GetTopic performs a thread safe operation
 // to return a pointer to a Topic object (potentially new)
+
+// 首先先尝试从topicMap表中获取，
+// 如果指定的topic存在，则直接返回topic对象，
+// 当topic不存在时，调用NewTopic接口创建,加入到 topicMap表中
+// 如果启用了nsqlookup则会从lookup中获取该topic的所有channel，然后加入到topicMap中
 func (n *NSQD) GetTopic(topicName string) *Topic {
 	// most likely we already have this topic, so try read lock first
 	n.RLock()
@@ -454,7 +461,7 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 	}
 
 	n.Lock()
-
+	// topicMap存在该topic则直接返回topic信息
 	t, ok = n.topicMap[topicName]
 	if ok {
 		n.Unlock()
@@ -463,6 +470,7 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 	deleteCallback := func(t *Topic) {
 		n.DeleteExistingTopic(t.name)
 	}
+
 	t = NewTopic(topicName, n, deleteCallback)
 	n.topicMap[topicName] = t
 
@@ -479,6 +487,8 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 
 	// if using lookupd, make a blocking call to get channels and immediately create them
 	// to ensure that all channels receive published messages
+	// 如果使用lookupd，则进行阻塞调用以获取通道并立即创建它们
+	// 确保所有频道都接收已发布的消息
 	lookupdHTTPAddrs := n.lookupdHTTPAddrs()
 	if len(lookupdHTTPAddrs) > 0 {
 		channelNames, err := n.ci.GetLookupdTopicChannels(t.name, lookupdHTTPAddrs)
