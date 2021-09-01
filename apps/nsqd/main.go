@@ -63,7 +63,7 @@ func (p *program) Start() error {
 		}
 	}
 	cfg.Validate()
-
+	// 初始化配置
 	options.Resolve(opts, flagSet, cfg)
 
 	nsqd, err := nsqd.New(opts)

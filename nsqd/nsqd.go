@@ -487,6 +487,7 @@ func (n *NSQD) GetTopic(topicName string) *Topic {
 
 	// if using lookupd, make a blocking call to get channels and immediately create them
 	// to ensure that all channels receive published messages
+
 	// 如果使用lookupd，则进行阻塞调用以获取通道并立即创建它们
 	// 确保所有频道都接收已发布的消息
 	lookupdHTTPAddrs := n.lookupdHTTPAddrs()
