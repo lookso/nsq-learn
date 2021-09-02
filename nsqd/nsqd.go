@@ -297,7 +297,7 @@ func writeSyncFile(fn string, data []byte) error {
 
 	_, err = f.Write(data)
 	if err == nil {
-		err = f.Sync()
+		err = f.Sync() // 打开一个同步的文件流
 	}
 	f.Close()
 	return err
@@ -358,12 +358,12 @@ func (n *NSQD) PersistMetadata() error {
 	js := make(map[string]interface{})
 	topics := []interface{}{}
 	for _, topic := range n.topicMap {
-		if topic.ephemeral {
+		if topic.ephemeral { // 跳过临时队列
 			continue
 		}
 		topicData := make(map[string]interface{})
 		topicData["name"] = topic.name
-		topicData["paused"] = topic.IsPaused()
+		topicData["paused"] = topic.IsPaused() // 是否暂停
 		channels := []interface{}{}
 		topic.Lock()
 		for _, channel := range topic.channelMap {
